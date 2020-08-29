@@ -92,6 +92,12 @@ namespace ojph {
     OJPH_EXPORT
     point get_downsampling(si32 comp_num) const;
 
+    //deeper getters
+    OJPH_EXPORT
+    ui32 get_recon_width(int comp_num) const;
+    OJPH_EXPORT
+    ui32 get_recon_height(int comp_num) const;
+
   private:
     local::param_siz* state;
   };
@@ -104,7 +110,7 @@ namespace ojph {
     param_cod(local::param_cod* p) : state(p) {}
 
     OJPH_EXPORT
-    void set_num_decomposition(ui8 num_decompositions);
+    void set_num_decomposition(ui32 num_decompositions);
     OJPH_EXPORT
     void set_block_dims(int width, int height);
     OJPH_EXPORT

@@ -47,6 +47,30 @@
 namespace ojph {
 
   ////////////////////////////////////////////////////////////////////////////
+#ifdef OJPH_OS_WINDOWS
+  int inline ojph_fseek(FILE* stream, si64 offset, int origin)
+  {
+    return _fseeki64(stream, offset, origin);
+  }
+
+  si64 inline ojph_ftell(FILE* stream)
+  {
+    return _ftelli64(stream);
+  }
+#else
+  int inline ojph_fseek(FILE* stream, si64 offset, int origin)
+  {
+    return fseek(stream, offset, origin);
+  }
+
+  si64 inline ojph_ftell(FILE* stream)
+  {
+    return ftell(stream);
+  }
+#endif
+
+
+  ////////////////////////////////////////////////////////////////////////////
   class outfile_base
   {
   public:
@@ -54,7 +78,7 @@ namespace ojph {
     virtual ~outfile_base() {}
 
     virtual size_t write(const void *ptr, size_t size) = 0;
-    virtual long tell() { return 0; }
+    virtual si64 tell() { return 0; }
     virtual void flush() {}
     virtual void close() {}
   };
@@ -73,7 +97,7 @@ namespace ojph {
     OJPH_EXPORT
     virtual size_t write(const void *ptr, size_t size);
     OJPH_EXPORT
-    virtual long tell();
+    virtual si64 tell();
     OJPH_EXPORT
     virtual void flush();
     OJPH_EXPORT
@@ -106,43 +130,47 @@ namespace ojph {
     OJPH_EXPORT
     ~mem_outfile();
 
-    /**  Call this function to open a memory file
+    /**  Call this function to open a memory file.
+	 *
      *  This function creates a memory buffer to be used for storing
-     *  the generated j2k codestream
+     *  the generated j2k codestream.
      *
      *  @param initial_size is the initial memory buffer size.
-     *         The default value is 2^16
+     *         The default value is 2^16.
      */
     OJPH_EXPORT
     void open(size_t initial_size = 65536);
 
-    /**  Call this function to write data to the memory file
+    /**  Call this function to write data to the memory file.
+	 *
      *  This function adds new data to the memory file.  The memory buffer
      *  of the file grows as needed.
      *
-     *  @param ptr is the address of the new data
-     *  @param size the number of bytes in the new data
+     *  @param ptr is the address of the new data.
+     *  @param size the number of bytes in the new data.
      */
     OJPH_EXPORT
     virtual size_t write(const void *ptr, size_t size);
 
     /** Call this function to know the file size (i.e., number of bytes used
-     *  to store the file)
+     *  to store the file).
      *
-     *  @return the file size
+     *  @return the file size.
      */
     OJPH_EXPORT
-    virtual long tell() { return cur_ptr - buf; }
+    virtual si64 tell() { return cur_ptr - buf; }
 
     /** Call this function to close the file and deallocate memory
+	 *
      *  The object can be used again after calling close
      */
     OJPH_EXPORT
     virtual void close();
 
     /** Call this function to access memory file data.
+	 *
      *  It is not recommended to store the returned value because buffer
-     *  storage address can change between write calls
+     *  storage address can change between write calls.
      *
      *  @return a constant pointer to the data.
      */
@@ -150,10 +178,11 @@ namespace ojph {
     const ui8* get_data() { return buf; }
 
     /** Call this function to access memory file data (for const objects)
+	 *
      *  This is similar to the above function, except that it can be used
      *  with constant objects.
      *
-     *  @return a constant pointer to the data
+     *  @return a constant pointer to the data.
      */
     OJPH_EXPORT
     const ui8* get_data() const { return buf; }
@@ -180,8 +209,8 @@ namespace ojph {
     //read reads size bytes, returns the number of bytes read
     virtual size_t read(void *ptr, size_t size) = 0;
     //seek returns 0 on success
-    virtual int seek(long int offset, enum seek origin) = 0;
-    virtual long tell() = 0;
+    virtual int seek(si64 offset, enum infile_base::seek origin) = 0;
+    virtual si64 tell() = 0;
     virtual bool eof() = 0;
     virtual void close() {}
   };
@@ -203,9 +232,9 @@ namespace ojph {
     virtual size_t read(void *ptr, size_t size);
     //seek returns 0 on success
     OJPH_EXPORT
-    virtual int seek(long int offset, enum seek origin);
+    virtual int seek(si64 offset, enum infile_base::seek origin);
     OJPH_EXPORT
-    virtual long tell();
+    virtual si64 tell();
     OJPH_EXPORT
     virtual bool eof() { return feof(fh) != 0; }
     OJPH_EXPORT
@@ -233,9 +262,9 @@ namespace ojph {
     virtual size_t read(void *ptr, size_t size);
     //seek returns 0 on success
     OJPH_EXPORT
-    virtual int seek(long int offset, enum seek origin);
+    virtual int seek(si64 offset, enum infile_base::seek origin);
     OJPH_EXPORT
-    virtual long tell() { return cur_ptr - data; }
+    virtual si64 tell() { return cur_ptr - data; }
     OJPH_EXPORT
     virtual bool eof() { return cur_ptr >= data + size; }
     OJPH_EXPORT

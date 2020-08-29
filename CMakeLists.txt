@@ -23,9 +23,23 @@ set(OPENJPH_VERSION "${OPENJPH_VERSION_MAJOR}.${OPENJPH_VERSION_MINOR}.${OPENJPH
 
 project (openjph DESCRIPTION "Open source implementation of JPH" LANGUAGES CXX)
 
+option(OJPH_DISABLE_INTEL_SIMD "Disables the use of SIMD instructions and associated files" OFF)
+option(BUILD_SHARED_LIBS "Shared Libraries" ON)
+
 set(CMAKE_CXX_STANDARD 11)
 if (MSVC)
 	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /EHsc /D \"_CRT_SECURE_NO_WARNINGS\"")
+endif()
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+  set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-Wall -Wextra -Wconversion -Wunused-parameter")
+endif()
+
+if (OJPH_DISABLE_INTEL_SIMD)
+	if (MSVC)
+		SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /D \"OJPH_DISABLE_INTEL_SIMD\"")
+	else()
+		SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DOJPH_DISABLE_INTEL_SIMD")
+	endif()
 endif()
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
@@ -44,7 +58,13 @@ CONFIGURE_FILE(
   "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${PROJECT_NAME}.pc"
 )
 
-add_library(openjph SHARED ${SOURCES} ${SSE_SOURCES} ${SSE2_SOURCES} ${AVX_SOURCES} ${AVX2_SOURCES})
+if (OJPH_DISABLE_INTEL_SIMD)
+    add_library(openjph ${SOURCES})
+else()
+    add_library(openjph ${SOURCES} ${SSE_SOURCES} ${SSE2_SOURCES} ${AVX_SOURCES} ${AVX2_SOURCES})
+endif()
+
+target_include_directories(openjph PUBLIC src/core/common)
 
 set_target_properties(openjph
   PROPERTIES
